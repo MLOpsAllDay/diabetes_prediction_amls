@@ -1,0 +1,84 @@
+stages:
+  - stage : deploy
+    displayName: Create AMLS instances
+    dependsOn: build
+    variables:
+    - group: ${{ parameters.variablegroup }}
+    jobs:
+      - job: deploy
+        displayName: Deploy scripts and create AMLS instances
+        pool: ${{ parameters.poolname }}
+        steps:
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.DefaultWorkingDirectory)'
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.7'
+              addToPath: true
+              architecture: x64
+          - script:
+                pip install azureml-core
+                pip install azureml-dataset-runtime
+                pip install azureml-pipeline
+                pip install azureml-widgets
+            displayName: Installing azureml-core
+          - task: PythonScript@0
+            displayName: Create Compute
+            inputs:
+              scriptSource: filePath
+              scriptPath: $(System.DefaultWorkingDirectory)/drop/create_compute.py
+            env:
+              TENANT_ID: $(tenant_id)
+              CLIENT_ID: $(client_id)
+              CLIENT_SECRET: $(client_id)
+              SUBSCRIPTION_ID: $(subscription_id)
+              RESOURCE_GROUP: $(resource_group)
+              WORKSPACE_NAME: $(workspace_name)
+              COMPUTE_NAME: $(compute_name)
+          - task: PythonScript@0
+            displayName: Load data to be accessible as dataset
+            inputs:
+              scriptSource: filePath
+              scriptPath: $(System.DefaultWorkingDirectory)/drop/prepare_data.py
+            env:
+              TENANT_ID: $(tenant_id)
+              CLIENT_ID: $(client_id)
+              CLIENT_SECRET: $(client_id)
+              SUBSCRIPTION_ID: $(subscription_id)
+              RESOURCE_GROUP: $(resource_group)
+              WORKSPACE_NAME: $(workspace_name)
+              DATASET_NAME: $(dataset_name)
+          - task: PythonScript@0
+            displayName: create environment to run experiment
+            inputs:
+              scriptSource: filePath
+              scriptPath: $(System.DefaultWorkingDirectory)/drop/create_environment.py
+            env:
+              TENANT_ID: $(tenant_id)
+              CLIENT_ID: $(client_id)
+              CLIENT_SECRET: $(client_id)
+              SUBSCRIPTION_ID: $(subscription_id)
+              RESOURCE_GROUP: $(resource_group)
+              WORKSPACE_NAME: $(workspace_name)
+              ENVIRONMENT_NAME: $(environment_name)
+          - task: PythonScript@0
+            displayName: create pipeline endpoint
+            inputs:
+              scriptSource: filePath
+              scriptPath: $(System.DefaultWorkingDirectory)/drop/create_pipeline.py
+            env:
+              TENANT_ID: $(tenant_id)
+              CLIENT_ID: $(client_id)
+              CLIENT_SECRET: $(client_id)
+              SUBSCRIPTION_ID: $(subscription_id)
+              RESOURCE_GROUP: $(resource_group)
+              WORKSPACE_NAME: $(workspace_name)
+              COMPUTE_NAME: $(compute_name)
+              DATASET_NAME: $(dataset_name)
+              ENVIRONMENT_NAME: $(environment_name)
+              PIPELINE_ENDPOINT: $(pipeline_endpoint)
+              SCRIPTS_PATH: $(scripts_path)

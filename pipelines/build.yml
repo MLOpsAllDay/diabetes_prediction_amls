@@ -1,0 +1,34 @@
+stages:
+  - stage: build
+    displayName: build initial artifacts
+    jobs:
+      - job: build
+        displayName: Build and publish artifacts
+        pool: ${{ parameters.poolname }}
+        steps:
+          - task: CopyFiles@1
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)/scripts/'
+              Contents: '*.py'
+              TargetFolder: '$(build.artifactstagingdirectory)/scripts'
+              OverWrite: true
+            displayName: copying ML wheel to artifact directory
+          - task: CopyFiles@1
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)/data/'
+              Contents: '*.csv'
+              TargetFolder: '$(build.artifactstagingdirectory)/data'
+              OverWrite: true
+            displayName: copying ML wheel to artifact directory
+          - task: CopyFiles@1
+            inputs:
+              SourceFolder: '$(Build.SourcesDirectory)'
+              Contents: '*.py'
+              TargetFolder: '$(build.artifactstagingdirectory)'
+              OverWrite: true
+            displayName: copying Logging wheel to artifact directory
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+            displayName: Publishing artifacts for other build to utilize them

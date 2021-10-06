@@ -1,0 +1,11 @@
+trigger: none
+
+stages:
+  - template: ./build.yml
+    parameters:
+      poolname: 'Azure Pipelines'
+
+  - template: ./deploy.yml
+    parameters:
+      variablegroup: 'mlops'
+      poolname: 'Azure Pipelines'
